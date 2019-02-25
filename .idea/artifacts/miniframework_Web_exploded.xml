@@ -1,0 +1,15 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" build-on-make="true" name="miniframework:Web exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/miniframework_Web_exploded</output-path>
+    <root id="root">
+      <element id="javaee-facet-resources" facet="miniframework/web/Web" />
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="miniframework" />
+        </element>
+      </element>
+      <element id="library" level="project" name="Maven: javax.servlet:servlet-api:2.5" />
+      <element id="library" level="application_server_libraries" name="Tomcat 7.0.56" />
+    </root>
+  </artifact>
+</component>
