@@ -2,7 +2,7 @@
 是一个仿照springmvc的api实现的简单的web框架哦
 使用教程:
 1. 配置mini:在resources目录下建立mini.properties文件
-配置miniframework.api.package----api扫描包（类比springmvc的controller)<br>
+配置miniframework.api.package----api扫描包（类比springmvc的controller)<br>   
 与miniframework.api.allowsuffix(限制通过mini的请求uri后缀，比如配置了.do,.action则只有无后缀url与.do,.action会被miniframework处理)
 2. 编写miniapi:在上述的api扫描包下建立api类，需要在类上添加API(@Api)注解,并且需要在对应的请求处理的映射方法添加Mapping注解（@Mapping)
           注：
