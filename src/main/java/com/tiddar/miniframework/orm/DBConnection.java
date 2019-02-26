@@ -31,10 +31,11 @@ public class DBConnection {
         }
     }
 
-    public   static Connection getConnection() {
-        while (connArray.size() != 0)
-            return connArray.pop();
-        return null;
+    public static Connection getConnection() {
+        while (true) {
+            if (connArray.size() != 0)
+                return connArray.pop();
+        }
     }
 
     public static void release(Connection connection) {

@@ -1,9 +1,9 @@
 package com.tiddar.miniframework.example;
 
 import com.tiddar.miniframework.entity.Test;
-import com.tiddar.miniframework.orm.MiniORM;
-import com.tiddar.miniframework.orm.MiniORMImpl;
-import com.tiddar.miniframework.orm.OrmFactory;
+import com.tiddar.miniframework.orm.*;
+
+import java.util.List;
 
 public class OnlyOrmExample {
 
@@ -22,6 +22,35 @@ public class OnlyOrmExample {
         test.setTest("老张");
         testMiniORM.insert(test);
 
+        /**
+         * 查询举例
+         */
+        System.out.println(testMiniORM.queryOne(new Param[]{new Param().field("test").like().value("%老%")}));
+
+        List<Test> tests = testMiniORM.queryList(new Param[]{new Param().field("test").like().value("%老%")});
+        for (int i = 0; i < tests.size(); i++) {
+
+            System.out.println("list查询结果的第" + i + "条:" + tests.get(i));
+        }
+
+
+        int num = 0;
+        int a = 1;
+        int total = testMiniORM.total(new Param[]{new Param().field("test").like().value("%老%")});
+        System.out.println("total:" + total);
+        int pageCount =total%2==0?total/2:(total+1)/2;
+        for (int i = 0; i < pageCount; i++) {
+            Page<Test> testPage = testMiniORM.queryPage(new Param[]{new Param().field("test").like().value("%老%")}, ++num, 2);
+            for (int i1 = 0; i1 < testPage.currentObjs.size(); i1++) {
+                System.out.println("第" + i + "页第" + a + "个对象:" + testPage.currentObjs.get(i1));
+                a++;
+            }
+
+        }
+
+        /**
+         *
+         */
 
     }
 }
