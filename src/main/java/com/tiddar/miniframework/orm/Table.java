@@ -1,5 +1,7 @@
 package com.tiddar.miniframework.orm;
-
+/**
+ * TODO 未完成
+ */
 public class Table {
     public String tableName;
     public Column[] columns;

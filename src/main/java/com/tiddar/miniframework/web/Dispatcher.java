@@ -27,37 +27,33 @@ public class Dispatcher extends HttpServlet {
     private static List allowSuffixs = Arrays.asList(Utility.getProperties("miniframework.api.allowsuffix").split(","));
     private static boolean lazyLoadApis = Boolean.valueOf(Utility.getProperties("miniframework.api.lazy") == null || Utility.getProperties("miniframework.api.lazy") == "" ? "false" : Utility.getProperties("miniframework.api.lazy"));
 
-    static {
-        synchronized (apiClasses) {
-            if (apiClasses.size() == 0) {
-                Set<Class<?>> classesUnderApiPackage = Utility.getClasses(basePackage);
-                for (Class<?> clazz : classesUnderApiPackage) {
-                    if (clazz.getAnnotation(Api.class) != null) {
-                        apiClasses.add(clazz);
-                        synchronized (mappers) {
-                            if (mappers.size() == 0) {
-                                String classurl = clazz.getAnnotation(Api.class).value();
-                                for (Method method : clazz.getMethods()) {
-                                    if (method.getAnnotation(Mapping.class) != null) {
-                                        String methodurl = classurl + method.getAnnotation(Mapping.class).value();
-                                        Mapper mapper = null;
-                                        try {
-                                            mapper = new Mapper(methodurl, clazz.newInstance(), method, method.getAnnotation(Mapping.class).method(), method.getAnnotation(Mapping.class).type());
-                                            mappers.put(methodurl, mapper);
-                                        } catch (InstantiationException e) {
-                                            e.printStackTrace();
-                                        } catch (IllegalAccessException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
+    public static void webInit() {
+        if (apiClasses.size() == 0) {
+            Set<Class<?>> classesUnderApiPackage = Utility.getClasses(basePackage);
+            for (Class<?> clazz : classesUnderApiPackage) {
+                if (clazz.getAnnotation(Api.class) != null) {
+                    apiClasses.add(clazz);
+                    if (mappers.size() == 0) {
+                        String classurl = clazz.getAnnotation(Api.class).value();
+                        for (Method method : clazz.getMethods()) {
+                            if (method.getAnnotation(Mapping.class) != null) {
+                                String methodurl = classurl + method.getAnnotation(Mapping.class).value();
+                                Mapper mapper = null;
+                                try {
+                                    mapper = new Mapper(methodurl, clazz.newInstance(), method, method.getAnnotation(Mapping.class).method(), method.getAnnotation(Mapping.class).type());
+                                    mappers.put(methodurl, mapper);
+                                } catch (InstantiationException e) {
+                                    e.printStackTrace();
+                                } catch (IllegalAccessException e) {
+                                    e.printStackTrace();
                                 }
                             }
                         }
                     }
+
                 }
             }
         }
-
     }
 
     @Override

@@ -170,10 +170,10 @@ public class Utility {
 
     public static String getProperties(String propKey) {
         try {
-
             InputStream in = Utility.class.getClassLoader().getResourceAsStream("mini.properties");
             Properties p = new Properties();
             p.load(in);
+            in.close();
             return p.getProperty(propKey);
         } catch (FileNotFoundException e) {
             e.printStackTrace();

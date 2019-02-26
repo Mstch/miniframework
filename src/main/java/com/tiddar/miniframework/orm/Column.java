@@ -1,5 +1,8 @@
 package com.tiddar.miniframework.orm;
 
+/**
+ * TODO 未完成
+ */
 public class Column {
     public String name;
     public String type;
