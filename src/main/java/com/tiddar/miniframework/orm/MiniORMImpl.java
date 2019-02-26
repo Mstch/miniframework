@@ -1,10 +1,6 @@
 package com.tiddar.miniframework.orm;
 
 
-import com.tiddar.miniframework.orm.DBConnection;
-import com.tiddar.miniframework.orm.MiniORM;
-import com.tiddar.miniframework.orm.Param;
-
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.*;
@@ -17,7 +13,6 @@ import java.util.Date;
  **/
 public class MiniORMImpl<T> implements MiniORM<T> {
 
-    private Connection conn;
     private Class clazz;
     private Field[] fields;
     private Method[] getMethods;
@@ -26,40 +21,31 @@ public class MiniORMImpl<T> implements MiniORM<T> {
     private boolean hasCreate = false;
 
     public MiniORMImpl(Class clazz) {
-        super();
-        this.conn = DBConnection.getConnection();
+        this(clazz, clazz.getSimpleName());
+    }
+
+    public MiniORMImpl(Class clazz, String tableName) {
         this.clazz = clazz;
         this.fields = this.clazz.getDeclaredFields();
         getMethods = new Method[fields.length];
         setMethods = new Method[fields.length];
-        boolean hasId = false, hasCreateDate = false, hasUpdateDate = false;
         for (int fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
             try {
-                hasId = hasId ||(fields[fieldIndex].getName().equals("id")&&fields[fieldIndex].getType().getSimpleName().equals("Long"));
-                hasCreateDate = hasCreateDate || (fields[fieldIndex].getName().equals("createDate"));
-                hasUpdateDate = hasUpdateDate || (fields[fieldIndex].getName().equals("updateDate"));
                 getMethods[fieldIndex] = new PropertyDescriptor(fields[fieldIndex].getName(), clazz).getReadMethod();
                 setMethods[fieldIndex] = new PropertyDescriptor(fields[fieldIndex].getName(), clazz).getWriteMethod();
             } catch (IntrospectionException e) {
                 e.printStackTrace();
             }
         }
-        if (!hasId||!hasCreateDate||!hasUpdateDate) {
-            throw new RuntimeException("实体类" + this.clazz.getSimpleName() + "不存在或不符合规范的必须字段：" + (!hasId ? " id " : "") + (!hasCreateDate ? "  createDate " : "") + (!hasUpdateDate ? " updateDate " : ""));
-        }
         this.tableName = clazz.getSimpleName();
         this.createTable();
         this.hasCreate = true;
     }
 
-    public MiniORMImpl(Class clazz, String tableName) {
-        this(clazz);
-        this.tableName = tableName;
-    }
-
 
     @Override
     public int insert(T[] insertEntities) {
+        Connection conn = DBConnection.getConnection();
         String baseStr = "insert into " + this.tableName;
         StringBuffer keysBuf = new StringBuffer("(");
         for (int index = 0; index < fields.length; index++) {
@@ -106,6 +92,7 @@ public class MiniORMImpl<T> implements MiniORM<T> {
             System.out.println(new Date() + "执行的SQL语句为:" + ptmt.toString());
             int rows = ptmt.executeUpdate();
             ptmt.close();
+            DBConnection.release(conn);
             return rows;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -116,6 +103,7 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
+        DBConnection.release(conn);
         return 0;
     }
 
@@ -127,12 +115,13 @@ public class MiniORMImpl<T> implements MiniORM<T> {
     }
 
     @Override
-    public List<T> query(Param[] params) {
-        return this.query(params, null, null);
+    public List<T> queryList(Param[] params) {
+        return this.queryList(params, null, null);
     }
 
     @Override
-    public List<T> query(Param[] params, String orderBy, String orderMethod) {
+    public List<T> queryList(Param[] params, String orderBy, String orderMethod) {
+        Connection conn = DBConnection.getConnection();
         String baseSQL = "select * from `" + this.tableName + "` where 1=1";
         StringBuffer conditionBuf = new StringBuffer("");
 
@@ -172,12 +161,19 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-
+        DBConnection.release(conn);
         return resultList;
     }
 
     @Override
-    public Page<T> query(Param[] params, int num, int size, String orderBy, String orderMethod) {
+    public Page<T> queryPage(Param[] params, int num, int size) {
+        return this.queryPage(params, num,size,null, null);
+    }
+
+    @Override
+    public Page<T> queryPage(Param[] params, int num, int size, String orderBy, String orderMethod) {
+
+        Connection conn = DBConnection.getConnection();
         String baseSQL = "select count(*) from `" + this.tableName + "` where 1=1";
         StringBuffer conditionBuf = new StringBuffer("");
         for (Param param : params) {
@@ -228,8 +224,8 @@ public class MiniORMImpl<T> implements MiniORM<T> {
             resultPage.size = size;
             resultPage.number = num;
             resultPage.total = total;
-
             ptmt.close();
+            DBConnection.release(conn);
             return resultPage;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -246,7 +242,7 @@ public class MiniORMImpl<T> implements MiniORM<T> {
 
     @Override
     public T queryOne(Param[] params) {
-        List<T> results = this.query(params);
+        List<T> results = this.queryList(params);
         if (results.size() > 0) {
             return results.get(0);
         }
@@ -255,6 +251,7 @@ public class MiniORMImpl<T> implements MiniORM<T> {
 
     @Override
     public int delete(Param[] params) {
+        Connection conn = DBConnection.getConnection();
         String baseSQL = "delete from `" + this.tableName + "` where 1=1";
         StringBuffer conditionBuf = new StringBuffer("");
         for (Param param : params) {
@@ -276,23 +273,24 @@ public class MiniORMImpl<T> implements MiniORM<T> {
             int rows = ptmt.executeUpdate();
 
             ptmt.close();
+            DBConnection.release(conn);
             return rows;
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        DBConnection.release(conn);
         return 0;
     }
 
     @Override
     public int update(Param[] params, T newEntity) {
-
+        Connection conn = DBConnection.getConnection();
         String baseSQL = "update `" + this.tableName + "` set ";
 
         try {
             StringBuffer valuesBuf = new StringBuffer(" ");
             for (int index = 0; index < getMethods.length; index++) {
-
                 Method getMethod = getMethods[index];
                 if (getMethod.invoke(newEntity) == null && !this.fields[index].getName().equals("updateDate")) continue;
                 valuesBuf.append("`" + fields[index].getName() + "`=?");
@@ -305,12 +303,9 @@ public class MiniORMImpl<T> implements MiniORM<T> {
                 conditionBuf.append(" " + param.field + " ");
                 conditionBuf.append(param.relation + "?");
             }
-
-
             PreparedStatement ptmt = null;
             ptmt = conn.prepareStatement(baseSQL + valuesBuf.toString() + conditionBuf.toString());
             int count = 1;
-
             Method setUpdateDateMethod = clazz.getMethod("setUpdateDate", Date.class);
             setUpdateDateMethod.invoke(newEntity, new Date());
             for (int index = 0; index < getMethods.length; index++) {
@@ -326,6 +321,7 @@ public class MiniORMImpl<T> implements MiniORM<T> {
             System.out.println(new Date() + "执行的SQL语句为:" + ptmt.toString());
             int rows = ptmt.executeUpdate();
             ptmt.close();
+            DBConnection.release(conn);
             return rows;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -336,6 +332,8 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
+
+        DBConnection.release(conn);
         return 0;
     }
 
@@ -346,14 +344,9 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         return this.update(params, newEntity);
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        this.conn.close();
-    }
 
     protected void createTable() {
-        this.tableName = tableName;
+        Connection conn = DBConnection.getConnection();
         List<Field> fieldList = new ArrayList<Field>();
         Collections.addAll(fieldList, this.fields);
         Iterator<Field> fieldIterator = fieldList.iterator();
@@ -367,16 +360,18 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         if (haveId && haveCreateDate && haveUpdateDate) {
             String createSQL = this.createTableSql();
             try {
-                Statement statement = this.conn.createStatement();
+                Statement statement = conn.createStatement();
                 System.out.println(new Date() + "执行的SQL语句为 " + createSQL);
                 statement.execute(createSQL);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+            DBConnection.release(conn);
         } else {
             throw new RuntimeException("实体类不和miniorm规范（不含id或createDate或updateDate");
         }
 
+        DBConnection.release(conn);
     }
 
     protected String createTableSql() {
@@ -407,7 +402,6 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         }
         return null;
     }
-
 
 
 }

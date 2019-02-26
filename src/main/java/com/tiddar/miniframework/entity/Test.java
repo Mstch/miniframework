@@ -3,6 +3,10 @@ package com.tiddar.miniframework.entity;
 import com.tiddar.miniframework.orm.annotation.Entity;
 
 import java.util.Date;
+
+/**
+ * 测试用的实体类，里面包含id,createDate,updateDate,test四个字段
+ */
 @Entity
 public class Test {
     Long id;

@@ -14,7 +14,11 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+/**
+ * 一些工具方法，包含递归获取包下所有类，获取properties配置文件的内容，把String类型造型成为其他<b>数据</b>
+ */
 public class Utility {
+    static InputStream in = Utility.class.getClassLoader().getResourceAsStream("mini.properties");
 
     /**
      * 从包package中获取所有的Class
@@ -168,9 +172,14 @@ public class Utility {
         }
     }
 
+    /**
+     * 获取配置文件内的属性
+     *
+     * @return
+     * @para propKey
+     */
     public static String getProperties(String propKey) {
         try {
-            InputStream in = Utility.class.getClassLoader().getResourceAsStream("mini.properties");
             Properties p = new Properties();
             p.load(in);
             in.close();
@@ -195,9 +204,9 @@ public class Utility {
             DateTimeFormatter format = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");//时间解析
             DateTime dateTime = DateTime.parse(string, format);
             return dateTime.toDate();
-        } else if(supportTypes.contains(clazz.getSimpleName())){
+        } else if (supportTypes.contains(clazz.getSimpleName())) {
             try {
-                return clazz.getMethod("valueOf",String.class).invoke(null,string);
+                return clazz.getMethod("valueOf", String.class).invoke(null, string);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {
@@ -205,7 +214,7 @@ public class Utility {
             } catch (NoSuchMethodException e) {
                 e.printStackTrace();
             }
-        }else throw new Exception("目前暂不支持该类型转换哦，不好意思呀");
+        } else throw new Exception("目前暂不支持该类型转换哦，不好意思呀");
         return null;
     }
 
