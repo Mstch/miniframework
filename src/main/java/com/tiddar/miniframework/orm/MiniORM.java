@@ -1,5 +1,6 @@
 package com.tiddar.miniframework.orm;
 
+import java.sql.Connection;
 import java.util.List;
 
 
@@ -36,5 +37,10 @@ public interface MiniORM<T> {
 
     int update(Long id, T newEntity);
 
-
+    /**
+     * 获取根据参数查询的结果集的总数
+     * @param params
+     * @return
+     */
+    int total(Param[] params);
 }

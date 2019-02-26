@@ -167,41 +167,27 @@ public class MiniORMImpl<T> implements MiniORM<T> {
 
     @Override
     public Page<T> queryPage(Param[] params, int num, int size) {
-        return this.queryPage(params, num,size,null, null);
+        return this.queryPage(params, num, size, null, null);
     }
 
     @Override
     public Page<T> queryPage(Param[] params, int num, int size, String orderBy, String orderMethod) {
 
         Connection conn = DBConnection.getConnection();
-        String baseSQL = "select count(*) from `" + this.tableName + "` where 1=1";
+
         StringBuffer conditionBuf = new StringBuffer("");
         for (Param param : params) {
             conditionBuf.append(" " + param.logic + " ");
             conditionBuf.append(" " + param.field + " ");
-            conditionBuf.append(param.relation + ((param.relation.toLowerCase().equals("'like'")) ? "%?%" : "?"));
+            conditionBuf.append(param.relation + "?");
         }
-
         try {
-            PreparedStatement ptmt = conn.prepareStatement(baseSQL + conditionBuf.toString());
-            int count = 1;
-            int total = 0;
-            for (Param param : params) {
-                ptmt.setObject(count, param.value);
-                count++;
-            }
-
-            System.out.println(new Date() + "执行的SQL语句为:" + ptmt.toString());
-            ResultSet rst = ptmt.executeQuery();
-            if (rst.next()) {
-                total = rst.getInt(0);
-            }
-            baseSQL = "select * from `" + this.tableName + "` where 1=1";
+            int total = total(conn, params, conditionBuf.toString());
+            String baseSQL = "select * from `" + this.tableName + "` where 1=1";
             String limitString = "limit ?,?";
-            ;
-            ptmt = conn.prepareStatement(baseSQL + conditionBuf + limitString + (orderBy == null ? "" : orderBy + " " + orderMethod));
+            PreparedStatement ptmt = conn.prepareStatement(baseSQL + conditionBuf + limitString + (orderBy == null ? "" : orderBy + " " + orderMethod));
             Page<T> resultPage = new Page<T>();
-            count = 1;
+            int count = 1;
             for (Param param : params) {
                 ptmt.setObject(count, param.value);
                 count++;
@@ -209,7 +195,7 @@ public class MiniORMImpl<T> implements MiniORM<T> {
             ptmt.setInt(count++, (num - 1) * size);
             ptmt.setInt(count, size);
             System.out.println(new Date() + "执行的SQL语句为:" + ptmt.toString());
-            rst = ptmt.executeQuery();
+            ResultSet rst = ptmt.executeQuery();
 
             List<T> resultList = new ArrayList<T>();
             while (rst.next()) {
@@ -236,6 +222,8 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
+
+        DBConnection.release(conn);
         return null;
     }
 
@@ -344,6 +332,28 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         return this.update(params, newEntity);
     }
 
+    @Override
+    public int total(Param[] params) {
+        Connection conn = DBConnection.getConnection();
+
+        StringBuffer conditionBuf = new StringBuffer("");
+        for (Param param : params) {
+            conditionBuf.append(" " + param.logic + " ");
+            conditionBuf.append(" " + param.field + " ");
+            conditionBuf.append(param.relation + "?");
+        }
+        try {
+            int total = total(conn, params, conditionBuf.toString());
+
+            DBConnection.release(conn);
+            return total;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        DBConnection.release(conn);
+        return -1;
+    }
+
 
     protected void createTable() {
         Connection conn = DBConnection.getConnection();
@@ -385,6 +395,30 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         }
         createTableSqlBuf.append("  PRIMARY KEY (`id`) USING BTREE)");
         return createTableSqlBuf.toString();
+    }
+
+    /**
+     * 获取根据参数查询的结果集的总数
+     *
+     * @param conn 用于在内部使用，统计数量，减少链接栈的变化
+     * @return
+     */
+    private int total(Connection conn, Param[] params, String condition) throws SQLException {
+        String baseSQL = "select count(*) from `" + this.tableName + "` where 1=1";
+        PreparedStatement ptmt = conn.prepareStatement(baseSQL + condition);
+        int count = 1;
+        int total = 0;
+        for (Param param : params) {
+            ptmt.setObject(count, param.value);
+            count++;
+        }
+        System.out.println(new Date() + "执行的SQL语句为:" + ptmt.toString());
+        ResultSet rst = ptmt.executeQuery();
+        if (rst.next()) {
+            total = rst.getInt(1);
+        }
+        return total;
+
     }
 
     String JavaTypeToCreateTableSQL(Field field) {
