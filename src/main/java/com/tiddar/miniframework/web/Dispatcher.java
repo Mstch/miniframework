@@ -6,15 +6,14 @@ import com.tiddar.miniframework.common.Utility;
 import com.tiddar.miniframework.web.annotation.Api;
 import com.tiddar.miniframework.web.annotation.Mapping;
 import com.tiddar.miniframework.web.enums.MapperType;
+import com.tiddar.miniframework.web.exception.DispatcherException;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -26,6 +25,7 @@ public class Dispatcher extends HttpServlet {
     private static Map<String, Mapper> mappers = new HashMap<>();
     private static List allowSuffixs = Arrays.asList(Utility.getProperties("miniframework.api.allowsuffix").split(","));
     private static boolean lazyLoadApis = Boolean.valueOf(Utility.getProperties("miniframework.api.lazy") == null || Utility.getProperties("miniframework.api.lazy") == "" ? "false" : Utility.getProperties("miniframework.api.lazy"));
+    public static boolean hasInit = false;
 
     public static void webInit() {
         if (apiClasses.size() == 0) {
@@ -42,6 +42,7 @@ public class Dispatcher extends HttpServlet {
                                 try {
                                     mapper = new Mapper(methodurl, clazz.newInstance(), method, method.getAnnotation(Mapping.class).method(), method.getAnnotation(Mapping.class).type());
                                     mappers.put(methodurl, mapper);
+                                    System.out.println("注册url:" + methodurl + "  对应的method:" + mapper.method);
                                 } catch (InstantiationException e) {
                                     e.printStackTrace();
                                 } catch (IllegalAccessException e) {
@@ -54,7 +55,9 @@ public class Dispatcher extends HttpServlet {
                 }
             }
         }
+        hasInit = true;
     }
+
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -93,6 +96,10 @@ public class Dispatcher extends HttpServlet {
         String uri = req.getRequestURI();
         try {
             Mapper mapper = mappers.get(uri);
+            if (mapper == null) {
+                DispatcherException.exception(404, "url在mini注册的路由里未找到", resp);
+                return;
+            }
             Object mappingReturn = invokeMapping(req, mapper.apiInstance, mapper.method);
             if (mapper.mapperType == MapperType.JSON) {
                 resp.getWriter().println(mappingReturn);
@@ -103,8 +110,10 @@ public class Dispatcher extends HttpServlet {
             } else if (mapper.mapperType == MapperType.SEND_REDIRECT_RELATIVE) {
                 resp.sendRedirect(req.getContextPath() + (String) invokeMapping(req, mapper.apiInstance, mapper.method));
             }
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            DispatcherException.exception(405, "参数错误，堆栈：" + e.getCause(), resp);
         } catch (Exception e) {
-            e.printStackTrace();
+            DispatcherException.exception(500, "程序出错，堆栈：" +e.getCause(), resp);
         }
     }
 
@@ -145,4 +154,17 @@ public class Dispatcher extends HttpServlet {
         return mapping.invoke(api, parameterArray);
     }
 
+
+    private String getStackTraceAsString(Exception e) {
+        // StringWriter将包含堆栈信息
+        StringWriter stringWriter = new StringWriter();
+        //必须将StringWriter封装成PrintWriter对象，
+        //以满足printStackTrace的要求
+        PrintWriter printWriter = new PrintWriter(stringWriter);
+        //获取堆栈信息
+        e.printStackTrace(printWriter);
+        //转换成String，并返回该String
+        StringBuffer error = stringWriter.getBuffer();
+        return error.toString();
+    }
 }
