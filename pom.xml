@@ -68,6 +68,13 @@
             <artifactId>tomcat-annotations-api</artifactId>
             <version>9.0.16</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.tomcat/annotations-api -->
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>annotations-api</artifactId>
+            <version>6.0.53</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
         <dependency>
             <groupId>com.google.code.gson</groupId>

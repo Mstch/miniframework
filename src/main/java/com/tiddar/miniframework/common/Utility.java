@@ -18,7 +18,6 @@ import java.util.jar.JarFile;
  * 一些工具方法，包含递归获取包下所有类，获取properties配置文件的内容，把String类型造型成为其他<b>数据</b>
  */
 public class Utility {
-    static InputStream in = Utility.class.getClassLoader().getResourceAsStream("mini.properties");
 
     /**
      * 从包package中获取所有的Class
@@ -94,7 +93,6 @@ public class Utility {
                                                         .length() - 6);
                                         try {
                                             // 添加到classes
-                                            System.out.println(className);
                                             if (!className.contains("$"))
                                                 classes.add(Class
                                                         .forName(packageName + '.'
@@ -161,7 +159,6 @@ public class Utility {
                     // 添加到集合中去
                     //classes.add(Class.forName(packageName + '.' + className));
                     //经过回复同学的提醒，这里用forName有一些不好，会触发static方法，没有使用classLoader的load干净
-                    System.out.println(className + "" + packageName);
                     if (!className.contains("$"))
                         classes.add(Thread.currentThread().getContextClassLoader().loadClass(packageName + '.' + className));
                 } catch (ClassNotFoundException e) {
@@ -180,6 +177,7 @@ public class Utility {
      */
     public static String getProperties(String propKey) {
         try {
+            InputStream in = Utility.class.getClassLoader().getResourceAsStream("mini.properties");
             Properties p = new Properties();
             p.load(in);
             in.close();
@@ -205,17 +203,8 @@ public class Utility {
             DateTime dateTime = DateTime.parse(string, format);
             return dateTime.toDate();
         } else if (supportTypes.contains(clazz.getSimpleName())) {
-            try {
-                return clazz.getMethod("valueOf", String.class).invoke(null, string);
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            }
+            return clazz.getMethod("valueOf", String.class).invoke(null, string);
         } else throw new Exception("目前暂不支持该类型转换哦，不好意思呀");
-        return null;
     }
 
 
