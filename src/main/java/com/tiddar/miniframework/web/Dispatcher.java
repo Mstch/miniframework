@@ -2,17 +2,20 @@ package com.tiddar.miniframework.web;
 
 
 import com.google.gson.Gson;
+import com.sun.deploy.net.HttpResponse;
 import com.tiddar.miniframework.common.Utility;
 import com.tiddar.miniframework.web.annotation.Api;
 import com.tiddar.miniframework.web.annotation.Mapping;
 import com.tiddar.miniframework.web.enums.MapperType;
 import com.tiddar.miniframework.web.exception.DispatcherException;
 
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -100,20 +103,22 @@ public class Dispatcher extends HttpServlet {
                 DispatcherException.exception(404, "url在mini注册的路由里未找到", resp);
                 return;
             }
-            Object mappingReturn = invokeMapping(req, mapper.apiInstance, mapper.method);
+            Object mappingReturn = invokeMapping(req, resp, mapper.apiInstance, mapper.method);
             if (mapper.mapperType == MapperType.JSON) {
                 resp.getWriter().println(mappingReturn);
             } else if (mapper.mapperType == MapperType.FORWARD) {
-                req.getRequestDispatcher((String) invokeMapping(req, mapper.apiInstance, mapper.method)).forward(req, resp);
+                req.getRequestDispatcher((String) invokeMapping(req, resp, mapper.apiInstance, mapper.method)).forward(req, resp);
             } else if (mapper.mapperType == MapperType.SEND_REDIRECT) {
-                resp.sendRedirect((String) invokeMapping(req, mapper.apiInstance, mapper.method));
+                resp.sendRedirect((String) invokeMapping(req, resp, mapper.apiInstance, mapper.method));
             } else if (mapper.mapperType == MapperType.SEND_REDIRECT_RELATIVE) {
-                resp.sendRedirect(req.getContextPath() + (String) invokeMapping(req, mapper.apiInstance, mapper.method));
+                resp.sendRedirect(req.getContextPath() + (String) invokeMapping(req, resp, mapper.apiInstance, mapper.method));
             }
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            e.printStackTrace();
             DispatcherException.exception(405, "参数错误，堆栈：" + e.getCause(), resp);
         } catch (Exception e) {
-            DispatcherException.exception(500, "程序出错，堆栈：" +e.getCause(), resp);
+            e.printStackTrace();
+            DispatcherException.exception(500, "程序出错，堆栈：" + e.getCause(), resp);
         }
     }
 
@@ -126,7 +131,7 @@ public class Dispatcher extends HttpServlet {
      * @param mapping mapping方法的Method实例
      * @return
      */
-    private Object invokeMapping(HttpServletRequest req, Object api, Method mapping) throws Exception {
+    private Object invokeMapping(HttpServletRequest req, HttpServletResponse resp, Object api, Method mapping) throws Exception {
         Class clazz = api.getClass();
         //得到该方法参数信息数组
         Gson gson = null;
@@ -137,21 +142,33 @@ public class Dispatcher extends HttpServlet {
 //            wholeStr.append(s);
 //        });
         Map<String, String[]> parameterMap = req.getParameterMap();
-        List<Object> mappingParameters = new ArrayList<Object>(parameters.length);
-        for (Parameter parameter : parameters) {
+        Object[] mappingParameters = new Object[parameters.length];
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+            if (parameter.getType() == HttpSession.class) {
+                mappingParameters[i] = req.getSession();
+                continue;
+            } else if (parameter.getType() == HttpServletRequest.class) {
+                mappingParameters[i] = req;
+                continue;
+            }
             String[] values = parameterMap.get(parameter.getName());
             String mappingParamterType = parameter.getType().getName(); //field为反射出来的字段类型
             String mappingParamterTypeSimple = parameter.getType().getSimpleName();
-            String value = values[0];
+            String value = values == null ? null : values[0];
             if (parameter.getType() == String.class)
-                mappingParameters.add(value);
+                mappingParameters[i] = value;
             else if (mappingParamterType.indexOf("java.lang.") == 0) {
                 Object param = Utility.convertStringToOtherType(parameter.getType(), value);
-                mappingParameters.add(param);
+                mappingParameters[i] = param;
             }
+
+//            else if (parameter.getType() == HttpResponse.class) {
+//                mappingParameters.add(resp);
+//            }
+
         }
-        Object[] parameterArray = mappingParameters.toArray();
-        return mapping.invoke(api, parameterArray);
+        return mapping.invoke(api, mappingParameters);
     }
 
 

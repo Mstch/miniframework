@@ -197,6 +197,7 @@ public class Utility {
      * @return
      */
     public static Object convertStringToOtherType(Class clazz, String string) throws Exception {
+        if (string == null) return null;
         List<String> supportTypes = Arrays.asList(new String[]{"Integer", "Float", "Double", "Short", "Long", "Byte", "Boolean"});
         if (clazz.getSimpleName().equals("Date")) {
             DateTimeFormatter format = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");//时间解析
