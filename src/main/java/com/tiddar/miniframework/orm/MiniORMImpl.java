@@ -133,7 +133,6 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         List<T> resultList = new ArrayList<T>();
         try {
             PreparedStatement ptmt = conn.prepareStatement(baseSQL + conditionBuf.toString() + (orderBy == null ? "" : orderBy + " " + orderMethod));
-
             int count = 1;
             for (Param param : params) {
                 ptmt.setObject(count, param.value);
@@ -141,15 +140,7 @@ public class MiniORMImpl<T> implements MiniORM<T> {
             }
             System.out.println(new Date() + "执行的SQL语句为:" + ptmt.toString());
             ResultSet rst = ptmt.executeQuery();
-
-            while (rst.next()) {
-                T obj = (T) clazz.newInstance();
-                for (int index = 0; index < setMethods.length; index++) {
-                    Method setMethod = setMethods[index];
-                    setMethod.invoke(obj, rst.getObject(fields[index].getName()));
-                }
-                resultList.add(obj);
-            }
+            resultList = castList(rst);
             ptmt.close();
 
         } catch (SQLException e) {
@@ -196,16 +187,7 @@ public class MiniORMImpl<T> implements MiniORM<T> {
             ptmt.setInt(count, size);
             System.out.println(new Date() + "执行的SQL语句为:" + ptmt.toString());
             ResultSet rst = ptmt.executeQuery();
-
-            List<T> resultList = new ArrayList<T>();
-            while (rst.next()) {
-                T obj = (T) clazz.newInstance();
-                for (int index = 0; index < setMethods.length; index++) {
-                    Method setMethod = setMethods[index];
-                    setMethod.invoke(obj, rst.getObject(fields[index].getName()));
-                }
-                resultList.add(obj);
-            }
+            List<T> resultList = castList(rst);
             resultPage.currentObjs = resultList;
             resultPage.size = size;
             resultPage.number = num;
@@ -213,16 +195,9 @@ public class MiniORMImpl<T> implements MiniORM<T> {
             ptmt.close();
             DBConnection.release(conn);
             return resultPage;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
         DBConnection.release(conn);
         return null;
     }
@@ -354,6 +329,50 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         return -1;
     }
 
+    @Override
+    public int executeUpdate(String sql) throws SQLException {
+        Connection connection = DBConnection.getConnection();
+        Statement statement = connection.prepareStatement(sql);
+        int count = ((PreparedStatement) statement).executeUpdate();
+        DBConnection.release(connection);
+        return count;
+    }
+
+    @Override
+    public T executeQueryOne(String sql) {
+        return executeQueryList(sql).get(0);
+    }
+
+    @Override
+    public List<T> executeQueryList(String sql) {
+        List<T> result = new ArrayList<T>();
+        try {
+            Connection connection = DBConnection.getConnection();
+            Statement statement = connection.prepareStatement(sql);
+            ResultSet rst = ((PreparedStatement) statement).executeQuery();
+            DBConnection.release(connection);
+            result = castList(rst);
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    @Override
+    public Page<T> executeQueryPage(String totalSQL, String sql, int num, int size) {
+        Connection conn = DBConnection.getConnection();
+        int total = total(totalSQL, conn);
+        Page<T> page = new Page<T>();
+        sql += " limit " + (num - 1) * size + "," + size;
+        List<T> currentObjs = executeQueryList(sql);
+        page.total = total;
+        page.currentObjs = currentObjs;
+        page.size = size;
+        page.number = num;
+        return page;
+    }
+
 
     protected void createTable() {
         Connection conn = DBConnection.getConnection();
@@ -421,6 +440,17 @@ public class MiniORMImpl<T> implements MiniORM<T> {
 
     }
 
+    int total(String countSQL, Connection conn) {
+        try {
+            ResultSet rst = conn.createStatement().executeQuery(countSQL);
+            if (rst.next())
+                return rst.getInt(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     String JavaTypeToCreateTableSQL(Field field) {
         String typeName = field.getType().getSimpleName();
         if (typeName.equals("int") || typeName.equals("Integer"))
@@ -437,5 +467,16 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         return null;
     }
 
-
+    List<T> castList(ResultSet rst) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException {
+        ArrayList<T> resultList = new ArrayList();
+        while (rst.next()) {
+            T obj = (T) clazz.newInstance();
+            for (int index = 0; index < setMethods.length; index++) {
+                Method setMethod = setMethods[index];
+                setMethod.invoke(obj, rst.getObject(fields[index].getName()));
+            }
+            resultList.add(obj);
+        }
+        return resultList;
+    }
 }

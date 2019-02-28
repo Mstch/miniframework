@@ -1,6 +1,8 @@
 package com.tiddar.miniframework.orm;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 
@@ -19,28 +21,43 @@ import java.util.List;
  */
 public interface MiniORM<T> {
     int insert(T[] insertEntities);
-
     int insert(T insertEntity);
-
-
     List<T> queryList(Param[] params);
-
     List<T> queryList(Param[] params, String orderBy, String orderMethod);
     Page<T> queryPage(Param[] params, int num, int size);
     Page<T> queryPage(Param[] params, int num, int size, String orderBy, String orderMethod);
-
     T queryOne(Param[] params);
-
     int delete(Param[] params);
-
     int update(Param[] params, T newEntity);
-
     int update(Long id, T newEntity);
-
     /**
      * 获取根据参数查询的结果集的总数
      * @param params
      * @return
      */
     int total(Param[] params);
+
+    /**
+     * 直接的执行sql增删改的方法，返回影响的记录数
+     * @param sql
+     * @return
+     */
+    int executeUpdate(String sql) throws SQLException;
+
+    /**
+     * 直接的执行sql查询单体的方法，
+     *
+     */
+    T executeQueryOne(String sql);
+
+    /**
+     * 直接的执行sql查询全部记录的方法，
+     *
+     */
+    List<T> executeQueryList(String sql) throws SQLException, IllegalAccessException, InvocationTargetException, InstantiationException;
+    /**
+     * 直接的执行sql分页查询的方法，
+     *
+     */
+    Page<T> executeQueryPage(String totalSQL, String sql, int num, int size);
 }
