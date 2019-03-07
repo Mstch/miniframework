@@ -11,6 +11,8 @@
         - 其中请求类型包括 JSON(默认值，直接写入response),FORWARD(请求转发),SEND_REDIRECT（请求重定向）,SEND_REDIRECT_RELATIVE;分别对应json api（当然相应里也可直接写普通字符串）,请求转发，请求重定向，与带项目根路径的请求重定向.
         当请求类型为请求转发获取请求重定向时必须返回String类型作为request.getRequestDispatcher()的参数或response.sendRedirect()的参数。
     - Mapping方法的编写   
+        **这里的参数a若想直接注入，需要在编译时加上-parameters参数，具体怎样加看这里[Java8编译器的新特性-参数名字保留在字节码中](http://xujin.org/ex/jdk8-parameters/)**
+        <br>**若不想添加这个参数，则需要在每个mapping方法的参数前加上@RequestParam注解，注解的值是请求的参数名**
         - 加上上述的mapping注解后,可书编写mapping方法，其中的参数去匹配request里的参数名以及request本身，还可以修改此次请求的响应response。举例：
            ```java
               @Api("/test")

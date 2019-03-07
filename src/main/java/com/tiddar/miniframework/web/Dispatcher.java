@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.tiddar.miniframework.common.Utility;
 import com.tiddar.miniframework.web.annotation.Api;
 import com.tiddar.miniframework.web.annotation.Mapping;
+import com.tiddar.miniframework.web.annotation.RequestParam;
 import com.tiddar.miniframework.web.enums.MapperType;
 import com.tiddar.miniframework.web.exception.DispatcherException;
 
@@ -151,7 +152,11 @@ public class Dispatcher extends HttpServlet {
                 mappingParameters[i] = req;
                 continue;
             }
-            String[] values = parameterMap.get(parameter.getName());
+            String mappingParamName = parameter.getName();
+            if(parameter.getAnnotation(RequestParam.class)!=null){//mapping方法上有requestparam注解，标记参数名
+                mappingParamName = parameter.getAnnotation(RequestParam.class).value();
+            }
+            String[] values = parameterMap.get(mappingParamName);
             String mappingParamterType = parameter.getType().getName(); //field为反射出来的字段类型
             String mappingParamterTypeSimple = parameter.getType().getSimpleName();
             String value = values == null ? null : values[0];
