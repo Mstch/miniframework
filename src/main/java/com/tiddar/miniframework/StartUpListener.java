@@ -1,6 +1,6 @@
 package com.tiddar.miniframework;
 
-import com.tiddar.miniframework.orm.OrmFactory;
+import com.tiddar.miniframework.factory.OrmFactory;
 import com.tiddar.miniframework.web.Dispatcher;
 
 import javax.servlet.ServletContextEvent;
@@ -30,7 +30,6 @@ public class StartUpListener implements ServletContextListener,
         System.out.println("mvc路由注册开始");
         Dispatcher.webInit();
         System.out.println("mvc路由注册结束");
-
         System.out.println("orm工具加载开始");
         OrmFactory.init();
         System.out.println("orm工具加载结束");

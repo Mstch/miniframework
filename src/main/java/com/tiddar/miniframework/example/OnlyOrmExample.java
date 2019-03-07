@@ -1,6 +1,7 @@
 package com.tiddar.miniframework.example;
 
 import com.tiddar.miniframework.entity.Test;
+import com.tiddar.miniframework.factory.OrmFactory;
 import com.tiddar.miniframework.orm.*;
 
 import java.util.List;

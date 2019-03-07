@@ -2,7 +2,6 @@ package com.tiddar.miniframework.web;
 
 
 import com.google.gson.Gson;
-import com.sun.deploy.net.HttpResponse;
 import com.tiddar.miniframework.common.Utility;
 import com.tiddar.miniframework.web.annotation.Api;
 import com.tiddar.miniframework.web.annotation.Mapping;

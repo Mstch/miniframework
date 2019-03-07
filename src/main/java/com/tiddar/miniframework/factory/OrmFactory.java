@@ -1,6 +1,9 @@
-package com.tiddar.miniframework.orm;
+package com.tiddar.miniframework.factory;
 
 import com.tiddar.miniframework.common.Utility;
+import com.tiddar.miniframework.orm.DBConnection;
+import com.tiddar.miniframework.orm.MiniORM;
+import com.tiddar.miniframework.orm.MiniORMImpl;
 import com.tiddar.miniframework.orm.annotation.Entity;
 
 import java.lang.annotation.Annotation;
