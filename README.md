@@ -18,7 +18,7 @@
               @Api("/test")
               public class Test {         
                   @Mapping("/ss")
-                  public String sss(Integer a){
+                  public String sss(Integer a){//这里也可以写成@RequestParam("a")
                       System.out.println(a);
                       return "1221";
                   }
