@@ -36,21 +36,19 @@ public class Dispatcher extends HttpServlet {
             for (Class<?> clazz : classesUnderApiPackage) {
                 if (clazz.getAnnotation(Api.class) != null) {
                     apiClasses.add(clazz);
-                    if (mappers.size() == 0) {
-                        String classurl = clazz.getAnnotation(Api.class).value();
-                        for (Method method : clazz.getMethods()) {
-                            if (method.getAnnotation(Mapping.class) != null) {
-                                String methodurl = classurl + method.getAnnotation(Mapping.class).value();
-                                Mapper mapper = null;
-                                try {
-                                    mapper = new Mapper(methodurl, clazz.newInstance(), method, method.getAnnotation(Mapping.class).method(), method.getAnnotation(Mapping.class).type());
-                                    mappers.put(methodurl, mapper);
-                                    System.out.println("注册url:" + methodurl + "  对应的method:" + mapper.method);
-                                } catch (InstantiationException e) {
-                                    e.printStackTrace();
-                                } catch (IllegalAccessException e) {
-                                    e.printStackTrace();
-                                }
+                    String classurl = clazz.getAnnotation(Api.class).value();
+                    for (Method method : clazz.getMethods()) {
+                        if (method.getAnnotation(Mapping.class) != null) {
+                            String methodurl = classurl + method.getAnnotation(Mapping.class).value();
+                            Mapper mapper = null;
+                            try {
+                                mapper = new Mapper(methodurl, clazz.newInstance(), method, method.getAnnotation(Mapping.class).method(), method.getAnnotation(Mapping.class).type());
+                                mappers.put(methodurl, mapper);
+                                System.out.println("注册url:" + methodurl + "  对应的method:" + mapper.method);
+                            } catch (InstantiationException e) {
+                                e.printStackTrace();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
                             }
                         }
                     }
@@ -153,7 +151,7 @@ public class Dispatcher extends HttpServlet {
                 continue;
             }
             String mappingParamName = parameter.getName();
-            if(parameter.getAnnotation(RequestParam.class)!=null){//mapping方法上有requestparam注解，标记参数名
+            if (parameter.getAnnotation(RequestParam.class) != null) {//mapping方法上有requestparam注解，标记参数名
                 mappingParamName = parameter.getAnnotation(RequestParam.class).value();
             }
             String[] values = parameterMap.get(mappingParamName);
