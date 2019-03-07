@@ -37,7 +37,7 @@ public class MiniORMImpl<T> implements MiniORM<T> {
                 e.printStackTrace();
             }
         }
-        this.tableName = clazz.getSimpleName();
+        this.tableName = tableName;
         this.createTable();
         this.hasCreate = true;
     }
