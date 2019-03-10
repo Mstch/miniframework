@@ -21,7 +21,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 @SuppressWarnings("ALL")
-@WebServlet(value = "/*", loadOnStartup = 0)
 public class Dispatcher extends HttpServlet {
     private static String basePackage = Utility.getProperties("miniframework.api.package");
     private static Set<Class<?>> apiClasses = new HashSet<>();

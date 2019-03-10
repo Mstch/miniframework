@@ -1,15 +1,20 @@
 package com.tiddar.miniframework;
 
+import com.tiddar.miniframework.common.Utility;
 import com.tiddar.miniframework.factory.OrmFactory;
 import com.tiddar.miniframework.web.Dispatcher;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import javax.servlet.ServletRegistration;
 import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpSessionAttributeListener;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 import javax.servlet.http.HttpSessionBindingEvent;
+import java.util.Arrays;
+import java.util.List;
 
 @WebListener
 public class StartUpListener implements ServletContextListener,
@@ -30,6 +35,13 @@ public class StartUpListener implements ServletContextListener,
         System.out.println("mvc路由注册开始");
         Dispatcher.webInit();
         System.out.println("mvc路由注册结束");
+        System.out.println("动态添加servlet");
+        ServletContext sc = sce.getServletContext();
+        ServletRegistration servletRegistration = sc.addServlet("dispatcher", Dispatcher.class);
+        List<String> urlPatterns = Arrays.asList(Utility.getProperties("miniframework.api.allowsuffix").split(","));
+        urlPatterns.add("/");
+        servletRegistration.addMapping(urlPatterns.toArray(new String[urlPatterns.size()]));
+        ((ServletRegistration.Dynamic) servletRegistration).setLoadOnStartup(0);
         System.out.println("orm工具加载开始");
         OrmFactory.init();
         System.out.println("orm工具加载结束");
