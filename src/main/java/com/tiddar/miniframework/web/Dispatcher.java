@@ -131,14 +131,7 @@ public class Dispatcher extends HttpServlet {
     private Object invokeMapping(HttpServletRequest req, HttpServletResponse resp, Object api, Method mapping) throws Exception {
         Class clazz = api.getClass();
         //得到该方法参数信息数组
-        Gson gson = null;
         Parameter[] parameters = mapping.getParameters();
-        BufferedReader body = req.getReader();
-//        StringBuffer wholeStr = new StringBuffer("");
-//        body.lines().forEach(s -> {
-//            wholeStr.append(s);
-//        });
-        Map<String, String[]> parameterMap = req.getParameterMap();
         Object[] mappingParameters = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
@@ -150,16 +143,17 @@ public class Dispatcher extends HttpServlet {
                 continue;
             }
             String mappingParamName = parameter.getName();
-            if (parameter.getAnnotation(RequestParam.class) != null) {//mapping方法上有requestparam注解，标记参数名
+            //mapping方法上有requestparam注解，标记参数名
+            if (parameter.getAnnotation(RequestParam.class) != null) {
                 mappingParamName = parameter.getAnnotation(RequestParam.class).value();
             }
-            String[] values = parameterMap.get(mappingParamName);
-            String mappingParamterType = parameter.getType().getName(); //field为反射出来的字段类型
+            String value = req.getParameter(mappingParamName);
+            //field为反射出来的字段类型
+            String mappingParamterType = parameter.getType().getName();
             String mappingParamterTypeSimple = parameter.getType().getSimpleName();
-            String value = values == null ? null : values[0];
-            if (parameter.getType() == String.class)
+            if (parameter.getType() == String.class) {
                 mappingParameters[i] = value;
-            else if (mappingParamterType.indexOf("java.lang.") == 0) {
+            } else if (mappingParamterType.indexOf("java.lang.") == 0) {
                 Object param = Utility.convertStringToOtherType(parameter.getType(), value);
                 mappingParameters[i] = param;
             }

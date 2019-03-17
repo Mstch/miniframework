@@ -142,7 +142,6 @@ public class MiniORMImpl<T> implements MiniORM<T> {
             ResultSet rst = ptmt.executeQuery();
             resultList = castList(rst);
             ptmt.close();
-
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -175,7 +174,7 @@ public class MiniORMImpl<T> implements MiniORM<T> {
         try {
             int total = total(conn, params, conditionBuf.toString());
             String baseSQL = "select * from `" + this.tableName + "` where 1=1";
-            String limitString = "limit ?,?";
+            String limitString = " limit ?,?";
             PreparedStatement ptmt = conn.prepareStatement(baseSQL + conditionBuf + limitString + (orderBy == null ? "" : orderBy + " " + orderMethod));
             Page<T> resultPage = new Page<T>();
             int count = 1;

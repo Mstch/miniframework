@@ -13,6 +13,7 @@ import javax.servlet.http.HttpSessionAttributeListener;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 import javax.servlet.http.HttpSessionBindingEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,6 +28,7 @@ public class StartUpListener implements ServletContextListener,
     // -------------------------------------------------------
     // ServletContextListener implementation
     // -------------------------------------------------------
+    @Override
     public void contextInitialized(ServletContextEvent sce) {
       /* This method is called when the servlet context is
          initialized(when the Web application is deployed). 
@@ -38,7 +40,10 @@ public class StartUpListener implements ServletContextListener,
         System.out.println("动态添加servlet");
         ServletContext sc = sce.getServletContext();
         ServletRegistration servletRegistration = sc.addServlet("dispatcher", Dispatcher.class);
-        List<String> urlPatterns = Arrays.asList(Utility.getProperties("miniframework.api.allowsuffix").split(","));
+        List<String> urlPatterns = new ArrayList<String>();
+        Arrays.asList((Utility.getProperties("miniframework.api.allowsuffix").split(","))).forEach(prop->{
+            urlPatterns.add("*"+prop);
+        });
         urlPatterns.add("/");
         servletRegistration.addMapping(urlPatterns.toArray(new String[urlPatterns.size()]));
         ((ServletRegistration.Dynamic) servletRegistration).setLoadOnStartup(0);
@@ -47,6 +52,7 @@ public class StartUpListener implements ServletContextListener,
         System.out.println("orm工具加载结束");
     }
 
+    @Override
     public void contextDestroyed(ServletContextEvent sce) {
       /* This method is invoked when the Servlet Context 
          (the Web application) is undeployed or 
@@ -57,10 +63,12 @@ public class StartUpListener implements ServletContextListener,
     // -------------------------------------------------------
     // HttpSessionListener implementation
     // -------------------------------------------------------
+    @Override
     public void sessionCreated(HttpSessionEvent se) {
         /* Session is created. */
     }
 
+    @Override
     public void sessionDestroyed(HttpSessionEvent se) {
         /* Session is destroyed. */
     }
@@ -69,18 +77,21 @@ public class StartUpListener implements ServletContextListener,
     // HttpSessionAttributeListener implementation
     // -------------------------------------------------------
 
+    @Override
     public void attributeAdded(HttpSessionBindingEvent sbe) {
       /* This method is called when an attribute 
          is added to a session.
       */
     }
 
+    @Override
     public void attributeRemoved(HttpSessionBindingEvent sbe) {
       /* This method is called when an attribute
          is removed from a session.
       */
     }
 
+    @Override
     public void attributeReplaced(HttpSessionBindingEvent sbe) {
       /* This method is invoked when an attibute
          is replaced in a session.
