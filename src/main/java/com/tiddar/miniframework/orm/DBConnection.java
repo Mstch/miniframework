@@ -14,9 +14,9 @@ import java.util.Vector;
 public class DBConnection {
     private static int connIndex = -1;
     private static final String driver = "com.mysql.cj.jdbc.Driver";
-    private static final String url = Utility.getProperties("miniframework.db.url");
-    private static final String user = Utility.getProperties("miniframework.db.user");
-    private static final String password = Utility.getProperties("miniframework.db.password");
+    private static final String url = PropertiesUtil.getProperties("miniframework.db.url");
+    private static final String user = PropertiesUtil.getProperties("miniframework.db.user");
+    private static final String password = PropertiesUtil.getProperties("miniframework.db.password");
     private static Stack<Connection> connArray;
 
     public synchronized static void init() {

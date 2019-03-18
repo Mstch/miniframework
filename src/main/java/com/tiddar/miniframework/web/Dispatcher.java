@@ -1,7 +1,7 @@
 package com.tiddar.miniframework.web;
 
 
-import com.google.gson.Gson;
+import com.tiddar.miniframework.common.PropertiesUtil;
 import com.tiddar.miniframework.common.Utility;
 import com.tiddar.miniframework.web.annotation.Api;
 import com.tiddar.miniframework.web.annotation.Mapping;
@@ -9,24 +9,29 @@ import com.tiddar.miniframework.web.annotation.RequestParam;
 import com.tiddar.miniframework.web.enums.MapperType;
 import com.tiddar.miniframework.web.exception.DispatcherException;
 
-import javax.servlet.Servlet;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.*;
-import java.lang.reflect.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.*;
 
+/**
+ * @author tiddar
+ */
 @SuppressWarnings("ALL")
 public class Dispatcher extends HttpServlet {
-    private static String basePackage = Utility.getProperties("miniframework.api.package");
+    private static String basePackage = PropertiesUtil.getProperties("miniframework.api.package");
     private static Set<Class<?>> apiClasses = new HashSet<>();
     private static Map<String, Mapper> mappers = new HashMap<>();
-    private static List allowSuffixs = Arrays.asList(Utility.getProperties("miniframework.api.allowsuffix").split(","));
-    private static boolean lazyLoadApis = Boolean.valueOf(Utility.getProperties("miniframework.api.lazy") == null || Utility.getProperties("miniframework.api.lazy") == "" ? "false" : Utility.getProperties("miniframework.api.lazy"));
+    private static List allowSuffixs = Arrays.asList(PropertiesUtil.getProperties("miniframework.api.allowsuffix").split(","));
+    private static boolean lazyLoadApis = Boolean.valueOf(PropertiesUtil.getProperties("miniframework.api.lazy") == null || PropertiesUtil.getProperties("miniframework.api.lazy") == "" ? "false" : PropertiesUtil.getProperties("miniframework.api.lazy"));
     public static boolean hasInit = false;
 
     public static void webInit() {
@@ -61,16 +66,6 @@ public class Dispatcher extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String uri = req.getRequestURI();
-        String suffix;
-        if (uri.contains(".")) {//若包含'.'说明get请求可能指向一个静态文件
-            suffix = uri.substring(uri.lastIndexOf("/") + 1, uri.length());
-            suffix = suffix.substring(suffix.lastIndexOf("."), suffix.length());
-            if (!allowSuffixs.contains(suffix)) {
-                this.getServletContext().getNamedDispatcher("default").forward(req, resp);
-                return;
-            }
-        }
         handleRequest(req, resp);
     }
 

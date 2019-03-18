@@ -34,22 +34,22 @@ public class StartUpListener implements ServletContextListener,
          initialized(when the Web application is deployed). 
          You can initialize servlet context related data here.
       */
-        System.out.println("mvc路由注册开始");
-        Dispatcher.webInit();
-        System.out.println("mvc路由注册结束");
-        System.out.println("动态添加servlet");
-        ServletContext sc = sce.getServletContext();
-        ServletRegistration servletRegistration = sc.addServlet("dispatcher", Dispatcher.class);
-        List<String> urlPatterns = new ArrayList<String>();
-        Arrays.asList((Utility.getProperties("miniframework.api.allowsuffix").split(","))).forEach(prop->{
-            urlPatterns.add("*"+prop);
-        });
-        urlPatterns.add("/");
-        servletRegistration.addMapping(urlPatterns.toArray(new String[urlPatterns.size()]));
-        ((ServletRegistration.Dynamic) servletRegistration).setLoadOnStartup(0);
-        System.out.println("orm工具加载开始");
-        OrmFactory.init();
-        System.out.println("orm工具加载结束");
+//        System.out.println("mvc路由注册开始");
+//        Dispatcher.webInit();
+//        System.out.println("mvc路由注册结束");
+//        System.out.println("动态添加servlet");
+//        ServletContext sc = sce.getServletContext();
+//        ServletRegistration servletRegistration = sc.addServlet("dispatcher", Dispatcher.class);
+//        List<String> urlPatterns = new ArrayList<String>();
+//        Arrays.asList((PropertiesUtil.getProperties(miniframework.api.allowsuffix").split(","))).forEach(prop->{
+//            urlPatterns.add("*"+prop);
+//        });
+//        urlPatterns.add("/");
+//        servletRegistration.addMapping(urlPatterns.toArray(new String[urlPatterns.size()]));
+//        ((ServletRegistration.Dynamic) servletRegistration).setLoadOnStartup(0);
+//        System.out.println("orm工具加载开始");
+//        OrmFactory.init();
+//        System.out.println("orm工具加载结束");
     }
 
     @Override

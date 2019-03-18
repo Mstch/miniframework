@@ -139,6 +139,7 @@ public class Utility {
         // 如果存在 就获取包下的所有文件 包括目录
         File[] dirfiles = dir.listFiles(new FileFilter() {
             // 自定义过滤规则 如果可以循环(包含子目录) 或则是以.class结尾的文件(编译好的java类文件)
+            @Override
             public boolean accept(File file) {
                 return (recursive && file.isDirectory())
                         || (file.getName().endsWith(".class"));
@@ -159,8 +160,9 @@ public class Utility {
                     // 添加到集合中去
                     //classes.add(Class.forName(packageName + '.' + className));
                     //经过回复同学的提醒，这里用forName有一些不好，会触发static方法，没有使用classLoader的load干净
-                    if (!className.contains("$"))
+                    if (!className.contains("$")) {
                         classes.add(Thread.currentThread().getContextClassLoader().loadClass(packageName + '.' + className));
+                    }
                 } catch (ClassNotFoundException e) {
                     // log.error("添加用户自定义视图类错误 找不到此类的.class文件");
                     e.printStackTrace();
@@ -197,7 +199,9 @@ public class Utility {
      * @return
      */
     public static Object convertStringToOtherType(Class clazz, String string) throws Exception {
-        if (string == null) return null;
+        if (string == null) {
+            return null;
+        }
         List<String> supportTypes = Arrays.asList(new String[]{"Integer", "Float", "Double", "Short", "Long", "Byte", "Boolean"});
         if (clazz.getSimpleName().equals("Date")) {
             DateTimeFormatter format = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");//时间解析
@@ -205,7 +209,9 @@ public class Utility {
             return dateTime.toDate();
         } else if (supportTypes.contains(clazz.getSimpleName())) {
             return clazz.getMethod("valueOf", String.class).invoke(null, string);
-        } else throw new Exception("目前暂不支持该类型转换哦，不好意思呀");
+        } else {
+            throw new Exception("目前暂不支持该类型转换哦，不好意思呀");
+        }
     }
 
 
