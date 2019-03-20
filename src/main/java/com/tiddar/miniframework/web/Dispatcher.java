@@ -8,6 +8,8 @@ import com.tiddar.miniframework.web.annotation.Mapping;
 import com.tiddar.miniframework.web.annotation.RequestParam;
 import com.tiddar.miniframework.web.enums.MapperType;
 import com.tiddar.miniframework.web.exception.DispatcherException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -27,36 +29,42 @@ import java.util.*;
  */
 @SuppressWarnings("ALL")
 public class Dispatcher extends HttpServlet {
+    private static Logger logger = LogManager.getLogger(Dispatcher.class);
     private static String basePackage = PropertiesUtil.getProperties("miniframework.api.package");
     private static Set<Class<?>> apiClasses = new HashSet<>();
     private static Map<String, Mapper> mappers = new HashMap<>();
     private static List allowSuffixs = Arrays.asList(PropertiesUtil.getProperties("miniframework.api.allowsuffix").split(","));
     private static boolean lazyLoadApis = Boolean.valueOf(PropertiesUtil.getProperties("miniframework.api.lazy") == null || PropertiesUtil.getProperties("miniframework.api.lazy") == "" ? "false" : PropertiesUtil.getProperties("miniframework.api.lazy"));
     public static boolean hasInit = false;
+    public static boolean accesLog = false;
 
     public static void webInit() {
         if (apiClasses.size() == 0) {
-            Set<Class<?>> classesUnderApiPackage = Utility.getClasses(basePackage);
-            for (Class<?> clazz : classesUnderApiPackage) {
-                if (clazz.getAnnotation(Api.class) != null) {
-                    apiClasses.add(clazz);
-                    String classurl = clazz.getAnnotation(Api.class).value();
-                    for (Method method : clazz.getMethods()) {
-                        if (method.getAnnotation(Mapping.class) != null) {
-                            String methodurl = classurl + method.getAnnotation(Mapping.class).value();
-                            Mapper mapper = null;
-                            try {
-                                mapper = new Mapper(methodurl, clazz.newInstance(), method, method.getAnnotation(Mapping.class).method(), method.getAnnotation(Mapping.class).type());
-                                mappers.put(methodurl, mapper);
-                                System.out.println("注册url:" + methodurl + "  对应的method:" + mapper.method);
-                            } catch (InstantiationException e) {
-                                e.printStackTrace();
-                            } catch (IllegalAccessException e) {
-                                e.printStackTrace();
+            synchronized (apiClasses) {
+                if (apiClasses.size() == 0) {
+                    Set<Class<?>> classesUnderApiPackage = Utility.getClasses(basePackage);
+                    for (Class<?> clazz : classesUnderApiPackage) {
+                        if (clazz.getAnnotation(Api.class) != null) {
+                            apiClasses.add(clazz);
+                            String classurl = clazz.getAnnotation(Api.class).value();
+                            for (Method method : clazz.getMethods()) {
+                                if (method.getAnnotation(Mapping.class) != null) {
+                                    String methodurl = classurl + method.getAnnotation(Mapping.class).value();
+                                    Mapper mapper = null;
+                                    try {
+                                        mapper = new Mapper(methodurl, clazz.newInstance(), method, method.getAnnotation(Mapping.class).method(), method.getAnnotation(Mapping.class).type());
+                                        mappers.put(methodurl, mapper);
+                                        logger.debug("注册url:{}对应的method:{}", methodurl, mapper.method);
+                                    } catch (InstantiationException e) {
+                                        e.printStackTrace();
+                                    } catch (IllegalAccessException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
                             }
+
                         }
                     }
-
                 }
             }
         }
@@ -148,15 +156,12 @@ public class Dispatcher extends HttpServlet {
             String mappingParamterTypeSimple = parameter.getType().getSimpleName();
             if (parameter.getType() == String.class) {
                 mappingParameters[i] = value;
-            } else if (mappingParamterType.indexOf("java.lang.") == 0) {
+
+            }//如果为数据类型
+            else if (mappingParamterType.indexOf("java.lang.") == 0) {
                 Object param = Utility.convertStringToOtherType(parameter.getType(), value);
                 mappingParameters[i] = param;
             }
-
-//            else if (parameter.getType() == HttpResponse.class) {
-//                mappingParameters.add(resp);
-//            }
-
         }
         return mapping.invoke(api, mappingParameters);
     }

@@ -215,5 +215,20 @@ public class Utility {
     }
 
 
+    /**
+     * 获取class文件路径
+     *
+     * @return
+     */
+    public static String getAbsolutePath(Class clazz) {
+        String path = null;
+        String folderPath = clazz.getProtectionDomain().getCodeSource().getLocation().getPath()
+                .substring(1);
+        if (folderPath.indexOf("target") > 0) {
+            path = folderPath.substring(0, folderPath.indexOf("target"));
+        }
+        return path;
+    }
+
 }
 

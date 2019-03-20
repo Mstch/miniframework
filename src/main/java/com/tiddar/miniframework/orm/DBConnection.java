@@ -1,5 +1,6 @@
 package com.tiddar.miniframework.orm;
 
+import com.tiddar.miniframework.common.PropertiesUtil;
 import com.tiddar.miniframework.common.Utility;
 
 import java.sql.Connection;
@@ -10,9 +11,9 @@ import java.util.Vector;
 
 /**
  * 数据库连接类，初始化时建立5个链接，
+ * @author tiddar
  */
 public class DBConnection {
-    private static int connIndex = -1;
     private static final String driver = "com.mysql.cj.jdbc.Driver";
     private static final String url = PropertiesUtil.getProperties("miniframework.db.url");
     private static final String user = PropertiesUtil.getProperties("miniframework.db.user");
@@ -22,7 +23,7 @@ public class DBConnection {
     public synchronized static void init() {
         try {
             Class.forName(driver);
-            connArray = new Stack<Connection>();
+            connArray = new Stack<>();
             for (int i = 0; i < 5; i++) {
                 connArray.add(DriverManager.getConnection(url, user, password));
             }
@@ -35,8 +36,9 @@ public class DBConnection {
 
     public static Connection getConnection() {
         while (true) {
-            if (connArray.size() != 0)
+            if (connArray.size() != 0) {
                 return connArray.pop();
+            }
         }
     }
 
