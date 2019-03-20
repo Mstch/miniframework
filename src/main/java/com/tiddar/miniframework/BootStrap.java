@@ -47,7 +47,7 @@ public class BootStrap {
      * 开启orm支持
      */
     public static void enableOrm() {
-
+        OrmFactory.init();
     }
 
 
